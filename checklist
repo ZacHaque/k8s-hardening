@@ -1,0 +1,55 @@
+## EKS Hardening Checklist:
+
+<u>**RBAC Related**</u>
+
+- [ ] Rbac with three user access (Admin/Developer/ReadOnly)
+- [ ] Switchrole from AWS match with RBAC access
+- [ ] Make sure kube-system not accessable by developer - using RBAC
+
+* * *
+
+<u>**Admission Control Related**</u>
+
+- [ ] Create Permissive PSP for `kube-system` namespace
+- [ ] Create Restrictive PSP for Each namespace `system:serviceaccount`
+- [ ] Create Restrictive PSP for Each namespace `system:authenticated-user`
+- [ ] Validate all restrictive policy - Ref below PSP testing checklist
+- [ ] Test permissive policy working all fine for `kube-system` for its own automation
+- [ ] ImagePull policy
+- [ ] Restrict automounting default `ServiceAccount`
+- [ ] Implement networkpolicy
+- [ ] Include a image policy webhook for image scanning with `trivy` or validate before deploy
+
+* * *
+
+<u>**Restrictive PSP testing checklist**</u>
+
+- [ ] Prevent root user
+- [ ] Prevent host PID
+- [ ] Prevent privileged
+- [ ] Limit volume use
+- [ ] Prevent hostNetwork
+- [ ] PreventHostIP
+- [ ] PreventHostIPC
+- [ ] Use AppArmour
+- [ ] Use RunC
+
+* * *
+
+<u>**Pipeline**</u>
+
+- [ ] Build ci/cd pipeline with gitlab
+- [ ] Deploy argo for kube CI/CD
+- [ ] Deploy ingress controller
+- [ ] Include kube-bench
+- [ ] Incluede static code analysis like `checkov`
+
+* * *
+
+<u>**Ongoing Maintenance (BAU)**</u>
+
+1.  When a new namespace requested - `KubeAdmin` needs to create `roleBinding` to `restrictivePSP` for that namespace's `ServiceAccount` otherwise `deployment` will fail.
+2.  When a new namespace requested - `KubeAdmin` needs to create `roleBinding` for `KubeDevRole` to give access to that namespace with `verbs`
+3.  When creating pod/deploy defination Developer needing adhere to the above `restrictivePSP` to avoid surprise.
+4.  Run the cluster buildpipeline periodically to stay up to date with terrafrom code base and `kubescape` or/and `kube-bench` check cluster againt CIS benchmark and NSA gudeline.
+5.  Spokes AWS account's user who need access to the EKS cluster need to be given assume role access to `EksDevRole` in the same account.
